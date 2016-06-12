@@ -1,0 +1,27 @@
+{
+    "name": "homebridge-flic",
+    "version": "0.0.1",
+    "description": "Flic plugin for homebridge",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/devbobo/homebridge-flic.git"
+    },
+    "licenses" : [
+        {
+        "type" : "MIT",
+        "url" : "https://github.com/devbobo/homebridge-flic/raw/master/LICENSE"
+        }
+    ],
+    "bugs": {
+        "url": "http://github.com/devbobo/homebridge-flic/issues"
+    },
+    "engines": {
+        "node": ">=0.12.0",
+        "homebridge": ">=0.3.0"
+    },
+  "keywords": [
+        "homebridge-plugin",
+        "flic",
+        "smart button",
+        "wireless button"    ],
+}
