@@ -88,7 +88,7 @@ FlicPlatform.prototype.configurationRequestHandler = function(context, request, 
 
     var sortAccessories = function() {
         context.sortedAccessories = Object.keys(self.accessories).map(
-            function(k){return this[k] instanceof PlatformAccessory ? this[k] : this[k].accessory},
+            function(k){return this[k]},
             self.accessories
         ).sort(function(a,b) {if (a.displayName < b.displayName) return -1; if (a.displayName > b.displayName) return 1; return 0});
 
@@ -118,7 +118,7 @@ FlicPlatform.prototype.configurationRequestHandler = function(context, request, 
             }
             break;
         case "Menu":
-            context.onScreen = request && request.response && request.response.selections[0] == 1 ? "Remove" : "Modify";
+            context.onScreen = request && request.response && request.response.selections[0] == 0 ? "Remove" : "Modify";
         case "Modify":
         case "Remove":
             respDict = {
