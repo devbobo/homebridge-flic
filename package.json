@@ -23,5 +23,6 @@
         "homebridge-plugin",
         "flic",
         "smart button",
-        "wireless button"    ],
+        "wireless button"
+    ]
 }

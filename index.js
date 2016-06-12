@@ -1,5 +1,6 @@
 'use strict';
 
+var http = require('http');
 var fliclib = require('./fliclib');
 var FlicClient = fliclib.FlicClient;
 var FlicConnectionChannel = fliclib.FlicConnectionChannel;
@@ -38,6 +39,16 @@ function FlicPlatform(log, config, api) {
     this.controllers = config.controllers || [{host: Constants.DEFAULT_HOST, port: Constants.DEFAULT_PORT}];
     this.log = log;
 
+    this.requestServer = http.createServer();
+
+    this.requestServer.on('error', function(err) {
+
+    });
+
+    this.requestServer.listen(18094, function() {
+        self.log("Server Listening...");
+    });
+
     this.api.on('didFinishLaunching', function() {
         self.controllers.forEach(
             function(controller) {
@@ -65,6 +76,80 @@ FlicPlatform.prototype.addAccessory = function(bdAddr) {
 
 FlicPlatform.prototype.configureAccessory = function(accessory) {
     this.accessories[accessory.UUID] = accessory;
+}
+
+FlicPlatform.prototype.configurationRequestHandler = function(context, request, callback) {
+    var self = this;
+    var respDict = {};
+
+    if (request && request.type === "Terminate") {
+        context.onScreen = null;
+    }
+
+    var sortAccessories = function() {
+        context.sortedAccessories = Object.keys(self.accessories).map(
+            function(k){return this[k] instanceof PlatformAccessory ? this[k] : this[k].accessory},
+            self.accessories
+        ).sort(function(a,b) {if (a.displayName < b.displayName) return -1; if (a.displayName > b.displayName) return 1; return 0});
+
+        return Object.keys(context.sortedAccessories).map(function(k) {return this[k].displayName}, context.sortedAccessories);
+    }
+
+    switch(context.onScreen) {
+        case "DoRemove":
+            if (request.response.selections) {
+                for (var i in request.response.selections.sort()) {
+                    this.removeAccessory(context.sortedAccessories[request.response.selections[i]]);
+                }
+
+                respDict = {
+                    "type": "Interface",
+                    "interface": "instruction",
+                    "title": "Finished",
+                    "detail": "Accessory removal was successful."
+                }
+
+                context.onScreen = null;
+                callback(respDict);
+            }
+            else {
+                context.onScreen = null;
+                callback(respDict, "platform", true, this.config);
+            }
+            break;
+        case "Menu":
+            context.onScreen = request && request.response && request.response.selections[0] == 1 ? "Remove" : "Modify";
+        case "Modify":
+        case "Remove":
+            respDict = {
+                "type": "Interface",
+                "interface": "list",
+                "title": "Select accessory to " + context.onScreen.toLowerCase(),
+                "allowMultipleSelection": context.onScreen == "Remove",
+                "items": sortAccessories()
+            }
+
+            context.onScreen = "Do" + context.onScreen;
+            callback(respDict);
+            break;
+        default:
+            if (request && (request.response || request.type === "Terminate")) {
+                context.onScreen = null;
+                callback(respDict, "platform", true, this.config);
+            }
+            else {
+                respDict = {
+                    "type": "Interface",
+                    "interface": "list",
+                    "title": "Select option",
+                    "allowMultipleSelection": false,
+                    "items": ["Remove Accessory"]
+                }
+
+                context.onScreen = "Menu";
+                callback(respDict);
+            }
+    }
 }
 
 FlicPlatform.prototype.connectButton = function(client, bdAddr) {
@@ -171,3 +256,14 @@ FlicPlatform.prototype.connectController = function(controller) {
         setTimeout(function() {self.connectController(controller);}, 60000);
     });
 }
+
+FlicPlatform.prototype.removeAccessory = function(accessory) {
+    this.log("Remove: %s", accessory.displayName);
+
+    if (this.accessories[accessory.UUID]) {
+        delete this.accessories[accessory.UUID];
+    }
+
+    this.api.unregisterPlatformAccessories("homebridge-flic", "Flic", [accessory]);
+}
+
