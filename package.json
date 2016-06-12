@@ -1,6 +1,6 @@
 {
     "name": "homebridge-flic",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Flic plugin for homebridge",
     "repository": {
         "type": "git",
