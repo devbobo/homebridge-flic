@@ -36,7 +36,7 @@ function FlicPlatform(log, config, api) {
     this.config = config || {};
     this.api = api;
     this.accessories = {};
-    this.controllers = config.controllers || [{host: Constants.DEFAULT_HOST, port: Constants.DEFAULT_PORT}];
+    this.controllers = this.config.controllers || [{host: Constants.DEFAULT_HOST, port: Constants.DEFAULT_PORT}];
     this.log = log;
 
     this.requestServer = http.createServer();
