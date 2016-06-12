@@ -15,7 +15,7 @@ This plugin requires the [Flic SDK for Linux](https://github.com/50ButtonsEach/f
 
 # Updating
 
-- npm update -g homebridge-lifx-lan
+- npm update -g homebridge-flic
 
 # Configuration
 
