@@ -59,12 +59,15 @@ function FlicPlatform(log, config, api) {
 }
 
 FlicPlatform.prototype.addAccessory = function(bdAddr) {
-    this.log("Found: %s", bdAddr);
+    var serial = bdAddr.replace(/:/g, '');
+    var name = 'Flic ' + serial.replace(/80e4da/, '');
 
-    var accessory = new Accessory(bdAddr, UUIDGen.generate(bdAddr));
+    this.log("Found: %s (%s)", name, serial);
+
+    var accessory = new Accessory(name, UUIDGen.generate(bdAddr));
 
     accessory
-        .addService(Service.StatelessProgrammableSwitch)
+        .addService(Service.StatelessProgrammableSwitch, name)
         .getCharacteristic(Characteristic.ProgrammableSwitchEvent)
         .setProps({ maxValue: 3 });
 
@@ -252,8 +255,6 @@ FlicPlatform.prototype.connectController = function(controller) {
                 }
             }
         );
-
-        setTimeout(function() {self.connectController(controller);}, 60000);
     });
 }
 
@@ -266,4 +267,3 @@ FlicPlatform.prototype.removeAccessory = function(accessory) {
 
     this.api.unregisterPlatformAccessories("homebridge-flic", "Flic", [accessory]);
 }
-
