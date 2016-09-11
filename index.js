@@ -1,7 +1,7 @@
 'use strict';
 
 var http = require('http');
-var fliclib = require('./fliclib');
+var fliclib = require('fliclib-daemon-client');
 var FlicClient = fliclib.FlicClient;
 var FlicConnectionChannel = fliclib.FlicConnectionChannel;
 
