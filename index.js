@@ -4,6 +4,7 @@ var http = require('http');
 var fliclib = require('fliclib-daemon-client');
 var FlicClient = fliclib.FlicClient;
 var FlicConnectionChannel = fliclib.FlicConnectionChannel;
+var FlicScanner = fliclib.FlicScanner;
 
 var Accessory, Characteristic, Service, UUIDGen;
 
@@ -121,18 +122,182 @@ FlicPlatform.prototype.configurationRequestHandler = function(context, request, 
             }
             break;
         case "Menu":
-            context.onScreen = request && request.response && request.response.selections[0] == 0 ? "Remove" : "Modify";
-        case "Modify":
-        case "Remove":
-            respDict = {
-                "type": "Interface",
-                "interface": "list",
-                "title": "Select accessory to " + context.onScreen.toLowerCase(),
-                "allowMultipleSelection": context.onScreen == "Remove",
-                "items": sortAccessories()
+            context.onScreen = request && request.response && request.response.selections[0] == 1 ? "Remove" : "Add";
+
+            switch(context.onScreen) {
+                case "Add":
+                    self.controllers.forEach(
+                        function(controller) {
+                            if (controller.client === undefined) {
+                                return;
+                            }
+
+                            self.log("Controller [%s:%s] - Scanner added", controller.host, controller.port);
+                            controller.scanner = new FlicScanner();
+
+                            controller.scanner.on("advertisementPacket", function(bdAddr, name, rssi, isPrivate, alreadyVerified) {
+                                clearTimeout(context.scanTimeout);
+
+                                if (alreadyVerified) {
+                                    return;
+                                }
+                                else if (isPrivate && context.onScreen != "isPrivate") {
+                                    context.onScreen = "isPrivate";
+                                    callback({
+                                        "type": "Interface",
+                                        "interface": "instruction",
+                                        "title": "Private button found",
+                                        "detail": "Hold down for 7 seconds to make it public.",
+                                        "showActivityIndicator": true
+                                    });
+                                    return;
+                                }
+                                else if (isPrivate) {
+                                    return;
+                                }
+
+                                self.controllers.forEach(
+                                    function(controller) {
+                                        if (controller.scanner === undefined) {
+                                            return;
+                                        }
+
+                                        try {
+                                            self.log("Controller [%s:%s] - Scanner removed", controller.host, controller.port);
+                                            controller.client.removeScanner(controller.scanner);
+                                        }
+                                        catch(e) {
+
+                                        }
+
+                                        delete controller.scanner;
+                                    }
+                                );
+
+                                var cc = new FlicConnectionChannel(bdAddr);
+
+                                cc.on("createResponse", function(error, connectionStatus) {
+                                    if (connectionStatus == "Ready") {
+                                        // Got verified by someone else between scan result and this event
+                                        controller.client.removeConnectionChannel(cc);
+                                        self.connectButton(controller.client, bdAddr, name);
+
+                                        callback({
+                                            "type": "Interface",
+                                            "interface": "instruction",
+                                            "title": "Sweet",
+                                            "detail": "Done."
+                                        });
+                                    } else if (error != "NoError") {
+                                        self.log("Controller [%s:%s] - Scanner failed: Too many pending connections", controller.host, controller.port);
+
+                                        callback({
+                                            "type": "Interface",
+                                            "interface": "instruction",
+                                            "title": "Scan failed",
+                                            "detail": "Too many pending connections"
+                                        });
+                                    } else {
+                                        self.log("Found a public button. Now connecting...");
+                                        context.buttonTimeout = setTimeout(function() {
+                                            controller.client.removeConnectionChannel(cc);
+                                        }, 45 * 1000);
+                                        callback({
+                                            "type": "Interface",
+                                            "interface": "instruction",
+                                            "title": "Public button found.",
+                                            "detail": "Connecting...",
+                                            "showActivityIndicator": true
+                                        });
+                                    }
+                                });
+                                cc.on("connectionStatusChanged", function(connectionStatus, disconnectReason) {
+                                    if (connectionStatus == "Ready") {
+                                        clearTimeout(context.buttonTimeout);
+                                        controller.client.removeConnectionChannel(cc);
+                                        self.connectButton(controller.client, bdAddr, name);
+
+                                        callback({
+                                            "type": "Interface",
+                                            "interface": "instruction",
+                                            "title": "Sweet",
+                                            "detail": "Done."
+                                        });
+                                    }
+                                });
+                                cc.on("removed", function(removedReason) {
+                                    if (removedReason == "RemovedByThisClient") {
+                                        removedReason = "Timed out";
+                                    }
+
+                                    self.log("Controller [%s:%s] - Scanner failed: %s", controller.host, controller.port, removedReason);
+
+                                    callback({
+                                        "type": "Interface",
+                                        "interface": "instruction",
+                                        "title": "Scan failed",
+                                        "detail": removedReason
+                                    });
+                                });
+
+                                controller.client.addConnectionChannel(cc);
+                            });
+
+                            controller.client.addScanner(controller.scanner);
+                        }
+                    );
+
+                    respDict = {
+                        "type": "Interface",
+                        "interface": "instruction",
+                        "title": "Scanning...",
+                        "detail": "Press your Flic button to add it.",
+                        "showActivityIndicator": true
+                    }
+
+                    context.scanTimeout = setTimeout(function () {
+                        self.controllers.forEach(
+                            function(controller) {
+                                if (controller.scanner === undefined) {
+                                    return;
+                                }
+
+                                try {
+                                    self.log("Controller [%s:%s] - Scanner removed", controller.host, controller.port);
+                                    controller.client.removeScanner(controller.scanner);
+                                }
+                                catch(e) {
+
+                                }
+
+                                delete controller.scanner;
+                            }
+                        );
+
+                        callback({
+                            "type": "Interface",
+                            "interface": "instruction",
+                            "title": "Finished",
+                            "detail": "Scanning timeout"
+                        });
+                    }, 60000);
+
+                    context.onScreen = null;
+                    break;
+                case "Modify":
+                case "Remove":
+                    respDict = {
+                        "type": "Interface",
+                        "interface": "list",
+                        "title": "Select accessory to " + context.onScreen.toLowerCase(),
+                        "allowMultipleSelection": context.onScreen == "Remove",
+                        "items": sortAccessories()
+                    }
+
+                    context.onScreen = "Do" + context.onScreen;
+                    break;
             }
 
-            context.onScreen = "Do" + context.onScreen;
             callback(respDict);
             break;
         default:
@@ -146,7 +311,7 @@ FlicPlatform.prototype.configurationRequestHandler = function(context, request, 
                     "interface": "list",
                     "title": "Select option",
                     "allowMultipleSelection": false,
-                    "items": ["Remove Accessory"]
+                    "items": ["Add Accessory", "Remove Accessory"]
                 }
 
                 context.onScreen = "Menu";
