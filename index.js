@@ -352,7 +352,7 @@ FlicPlatform.prototype.connectButton = function(client, bdAddr) {
         clearTimeout(timeout);
         timeout = setTimeout(function () {
             accessory.getService(Service.StatelessProgrammableSwitch).getCharacteristic(Characteristic.ProgrammableSwitchEvent).setValue(0);
-        }, 1000);
+        }, 100);
     });
 
     cc.on("connectionStatusChanged", function(connectionStatus, disconnectReason) {
