@@ -1,6 +1,5 @@
 'use strict';
 
-var http = require('http');
 var fliclib = require('fliclib-daemon-client');
 var FlicClient = fliclib.FlicClient;
 var FlicConnectionChannel = fliclib.FlicConnectionChannel;
@@ -39,16 +38,6 @@ function FlicPlatform(log, config, api) {
     this.accessories = {};
     this.controllers = this.config.controllers || [{host: Constants.DEFAULT_HOST, port: Constants.DEFAULT_PORT}];
     this.log = log;
-
-    this.requestServer = http.createServer();
-
-    this.requestServer.on('error', function(err) {
-
-    });
-
-    this.requestServer.listen(18094, function() {
-        self.log("Server Listening...");
-    });
 
     this.api.on('didFinishLaunching', function() {
         self.controllers.forEach(
@@ -352,7 +341,7 @@ FlicPlatform.prototype.connectButton = function(client, bdAddr) {
         clearTimeout(timeout);
         timeout = setTimeout(function () {
             accessory.getService(Service.StatelessProgrammableSwitch).getCharacteristic(Characteristic.ProgrammableSwitchEvent).setValue(0);
-        }, 100);
+        }, 500);
     });
 
     cc.on("connectionStatusChanged", function(connectionStatus, disconnectReason) {
