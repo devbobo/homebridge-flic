@@ -27,7 +27,7 @@ Configuration sample:
         "platform": "Flic",
         "name": "Flic",
         "controllers": [
-            {"host": "locahost", "port": 5551}
+            {"host": "localhost", "port": 5551}
         ]
     }
 ]
