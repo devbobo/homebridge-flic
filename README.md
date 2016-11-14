@@ -1,5 +1,6 @@
 # homebridge-flic
 [![NPM Version](https://img.shields.io/npm/v/homebridge-flic.svg)](https://www.npmjs.com/package/homebridge-flic)
+[![Dependency Status](https://img.shields.io/versioneye/d/nodejs/homebridge-flic.svg)](https://www.versioneye.com/nodejs/homebridge-flic/)
 
 [Flic](https://flic.io) plugin for [Homebridge](https://github.com/nfarina/homebridge).
 
