@@ -6,7 +6,12 @@
 
 # Requirements
 
-This plugin requires the [Flic SDK for Linux](https://github.com/50ButtonsEach/fliclib-linux-hci) installed on a machine to run.
+This plugin requires the Flic Daemon to be installed on a machine to run.
+
+There are platform specific versions to choose from...
+- [fliclib-linux-hci](https://github.com/50ButtonsEach/fliclib-linux-hci)
+- [flic-service-osx](https://github.com/50ButtonsEach/flic-service-osx)
+- [fliclib-windows](https://github.com/50ButtonsEach/fliclib-windows)
 
 # Installation
 
