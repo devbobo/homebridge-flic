@@ -19,21 +19,28 @@ module.exports = function (homebridge) {
 var Constants = {
     DEFAULT_HOST: 'localhost',
     DEFAULT_PORT: 5551,
-    SINGLE_CLICK: 1,
-    DOUBLE_CLICK: 2,
-    HOLD: 3
+    NO_PRESS: -1,
+    SINGLE_PRESS: 0,
+    DOUBLE_PRESS: 1,
+    LONG_PRESS: 2
 }
 
 Constants.CLICK_TYPE = {
-    'ButtonSingleClick': Constants.SINGLE_CLICK,
-    'ButtonDoubleClick': Constants.DOUBLE_CLICK,
-    'ButtonHold':        Constants.HOLD
+    'ButtonSingleClick': Constants.SINGLE_PRESS,
+    'ButtonDoubleClick': Constants.DOUBLE_PRESS,
+    'ButtonHold':        Constants.LONG_PRESS
 }
 
 function FlicPlatform(log, config, api) {
+    if (!config) {
+        log.warn("Ignoring Flic Platform setup because it is not configured");
+        this.disabled = true;
+        return;
+    }
+
     var self = this;
 
-    this.config = config || {};
+    this.config = config;
     this.api = api;
     this.accessories = {};
     this.controllers = this.config.controllers || [{host: Constants.DEFAULT_HOST, port: Constants.DEFAULT_PORT}];
@@ -59,7 +66,7 @@ FlicPlatform.prototype.addAccessory = function(bdAddr) {
     accessory
         .addService(Service.StatelessProgrammableSwitch, name)
         .getCharacteristic(Characteristic.ProgrammableSwitchEvent)
-        .setProps({ maxValue: 3 });
+        .setProps({format: Characteristic.Formats.INT8, maxValue: 2, minValue: -1});
 
     this.accessories[accessory.UUID] = accessory;
     this.api.registerPlatformAccessories("homebridge-flic", "Flic", [accessory]);
@@ -312,6 +319,7 @@ FlicPlatform.prototype.configurationRequestHandler = function(context, request, 
 FlicPlatform.prototype.connectButton = function(client, bdAddr) {
     var self = this;
     var uuid = UUIDGen.generate(bdAddr);
+    var serial = bdAddr.replace(/:/g, '');
     var accessory = this.accessories[uuid];
     var timeout;
 
@@ -320,9 +328,14 @@ FlicPlatform.prototype.connectButton = function(client, bdAddr) {
     }
 
     accessory.getService(Service.AccessoryInformation)
-        .setCharacteristic(Characteristic.Manufacturer, "Flic")
-        .setCharacteristic(Characteristic.Model, "Wireless Smart Button")
-        .setCharacteristic(Characteristic.SerialNumber, bdAddr);
+        .setCharacteristic(Characteristic.Manufacturer, "Shortcut Labs")
+        .setCharacteristic(Characteristic.Model, "Flic")
+        .setCharacteristic(Characteristic.SerialNumber, serial);
+
+    accessory
+        .getService(Service.StatelessProgrammableSwitch)
+        .getCharacteristic(Characteristic.ProgrammableSwitchEvent)
+        .setProps({format: Characteristic.Formats.INT8, maxValue: 2, minValue: -1});
 
     accessory.updateReachability(true);
 
@@ -335,21 +348,21 @@ FlicPlatform.prototype.connectButton = function(client, bdAddr) {
             return;
         }
 
-        self.log("%s - %s", bdAddr, clickType);
-        accessory.getService(Service.StatelessProgrammableSwitch).getCharacteristic(Characteristic.ProgrammableSwitchEvent).setValue(Constants.CLICK_TYPE[clickType] || Constants.SINGLE_CLICK);
+        self.log("%s - %s", serial, clickType);
+        accessory.getService(Service.StatelessProgrammableSwitch).getCharacteristic(Characteristic.ProgrammableSwitchEvent).setValue(Constants.CLICK_TYPE[clickType] || Constants.SINGLE_PRESS);
 
         clearTimeout(timeout);
         timeout = setTimeout(function () {
-            accessory.getService(Service.StatelessProgrammableSwitch).getCharacteristic(Characteristic.ProgrammableSwitchEvent).setValue(0);
+            accessory.getService(Service.StatelessProgrammableSwitch).getCharacteristic(Characteristic.ProgrammableSwitchEvent).setValue(Constants.NO_PRESS);
         }, 500);
     });
 
     cc.on("connectionStatusChanged", function(connectionStatus, disconnectReason) {
-        self.log("%s - %s%s", bdAddr, connectionStatus, (connectionStatus == "Disconnected" ? " " + disconnectReason : ""));
+        self.log("%s - %s%s", serial, connectionStatus, (connectionStatus == "Disconnected" ? " " + disconnectReason : ""));
     });
 
     cc.on("removed", function(reason) {
-        self.log("%s - Connection Removed (%s)", bdAddr, reason);
+        self.log("%s - Connection Removed (%s)", serial, reason);
         accessory.updateReachability(false);
     });
 }
