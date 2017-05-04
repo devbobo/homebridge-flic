@@ -5,7 +5,7 @@ var FlicClient = fliclib.FlicClient;
 var FlicConnectionChannel = fliclib.FlicConnectionChannel;
 var FlicScanner = fliclib.FlicScanner;
 
-var Accessory, Characteristic, Service, UUIDGen;
+var Accessory, Characteristic, Constants, Service, UUIDGen;
 
 module.exports = function (homebridge) {
     Accessory = homebridge.platformAccessory;
@@ -13,23 +13,18 @@ module.exports = function (homebridge) {
     Service = homebridge.hap.Service;
     UUIDGen = homebridge.hap.uuid;
 
+    Constants = {
+        DEFAULT_HOST: 'localhost',
+        DEFAULT_PORT: 5551,
+        CLICK_TYPE: {
+            'ButtonSingleClick': Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS,
+            'ButtonDoubleClick': Characteristic.ProgrammableSwitchEvent.DOUBLE_PRESS,
+            'ButtonHold':        Characteristic.ProgrammableSwitchEvent.LONG_PRESS
+        }
+    }
+
     homebridge.registerPlatform('homebridge-flic', 'Flic', FlicPlatform, true);
 };
-
-var Constants = {
-    DEFAULT_HOST: 'localhost',
-    DEFAULT_PORT: 5551,
-    NO_PRESS: -1,
-    SINGLE_PRESS: 0,
-    DOUBLE_PRESS: 1,
-    LONG_PRESS: 2
-}
-
-Constants.CLICK_TYPE = {
-    'ButtonSingleClick': Constants.SINGLE_PRESS,
-    'ButtonDoubleClick': Constants.DOUBLE_PRESS,
-    'ButtonHold':        Constants.LONG_PRESS
-}
 
 function FlicPlatform(log, config, api) {
     if (!config) {
@@ -63,10 +58,7 @@ FlicPlatform.prototype.addAccessory = function(bdAddr) {
 
     var accessory = new Accessory(name, UUIDGen.generate(bdAddr));
 
-    accessory
-        .addService(Service.StatelessProgrammableSwitch, name)
-        .getCharacteristic(Characteristic.ProgrammableSwitchEvent)
-        .setProps({format: Characteristic.Formats.INT8, maxValue: 2, minValue: -1});
+    accessory.addService(Service.StatelessProgrammableSwitch, name);
 
     this.accessories[accessory.UUID] = accessory;
     this.api.registerPlatformAccessories("homebridge-flic", "Flic", [accessory]);
@@ -335,7 +327,7 @@ FlicPlatform.prototype.connectButton = function(client, bdAddr) {
     accessory
         .getService(Service.StatelessProgrammableSwitch)
         .getCharacteristic(Characteristic.ProgrammableSwitchEvent)
-        .setProps({format: Characteristic.Formats.INT8, maxValue: 2, minValue: -1});
+        .setProps({maxValue: Characteristic.ProgrammableSwitchEvent.LONG_PRESS});
 
     accessory.updateReachability(true);
 
@@ -349,12 +341,10 @@ FlicPlatform.prototype.connectButton = function(client, bdAddr) {
         }
 
         self.log("%s - %s", serial, clickType);
-        accessory.getService(Service.StatelessProgrammableSwitch).getCharacteristic(Characteristic.ProgrammableSwitchEvent).setValue(Constants.CLICK_TYPE[clickType] || Constants.SINGLE_PRESS);
-
-        clearTimeout(timeout);
-        timeout = setTimeout(function () {
-            accessory.getService(Service.StatelessProgrammableSwitch).getCharacteristic(Characteristic.ProgrammableSwitchEvent).setValue(Constants.NO_PRESS);
-        }, 500);
+        accessory
+            .getService(Service.StatelessProgrammableSwitch)
+            .getCharacteristic(Characteristic.ProgrammableSwitchEvent)
+            .setValue(Constants.CLICK_TYPE[clickType] || Constants.CLICK_TYPE['ButtonSingleClick']);
     });
 
     cc.on("connectionStatusChanged", function(connectionStatus, disconnectReason) {
