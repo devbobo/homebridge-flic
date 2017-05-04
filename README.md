@@ -1,11 +1,18 @@
 # homebridge-flic
 [![NPM Version](https://img.shields.io/npm/v/homebridge-flic.svg)](https://www.npmjs.com/package/homebridge-flic)
+[![Dependency Status](https://img.shields.io/versioneye/d/nodejs/homebridge-flic.svg)](https://www.versioneye.com/nodejs/homebridge-flic/)
+[![Slack Channel](https://img.shields.io/badge/slack-homebridge--flic-green.svg)](https://homebridgeteam.slack.com/messages/C560YBZ8E/)
 
 [Flic](https://flic.io) plugin for [Homebridge](https://github.com/nfarina/homebridge).
 
 # Requirements
 
-This plugin requires the [Flic SDK for Linux](https://github.com/50ButtonsEach/fliclib-linux-hci) installed on a machine to run.
+This plugin requires the Flic Daemon to be installed on a machine to run.
+
+There are platform specific versions to choose from...
+- [fliclib-linux-hci](https://github.com/50ButtonsEach/fliclib-linux-hci)
+- [flic-service-osx](https://github.com/50ButtonsEach/flic-service-osx)
+- [fliclib-windows](https://github.com/50ButtonsEach/fliclib-windows)
 
 # Installation
 
