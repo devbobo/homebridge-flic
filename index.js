@@ -329,8 +329,6 @@ FlicPlatform.prototype.connectButton = function(client, bdAddr) {
         .getCharacteristic(Characteristic.ProgrammableSwitchEvent)
         .setProps({maxValue: Characteristic.ProgrammableSwitchEvent.LONG_PRESS});
 
-    accessory.updateReachability(true);
-
     var cc = new FlicConnectionChannel(bdAddr);
 
     client.addConnectionChannel(cc);
@@ -353,7 +351,6 @@ FlicPlatform.prototype.connectButton = function(client, bdAddr) {
 
     cc.on("removed", function(reason) {
         self.log("%s - Connection Removed (%s)", serial, reason);
-        accessory.updateReachability(false);
     });
 }
 
@@ -401,17 +398,6 @@ FlicPlatform.prototype.connectController = function(controller) {
 
     controller.client.on("close", function(hadError) {
         self.log("Controller [%s:%s] - Disconnected", controller.host, controller.port);
-
-        controller.buttons.forEach(
-            function(bdAddr) {
-                var uuid = UUIDGen.generate(bdAddr);
-                var accessory = self.accessories[uuid];
-
-                if (accessory !== undefined) {
-                    accessory.updateReachability(false);
-                }
-            }
-        );
     });
 }
 
