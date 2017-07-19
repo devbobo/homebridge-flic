@@ -1,7 +1,10 @@
 # homebridge-flic
+
+[![npm package](https://nodei.co/npm/homebridge-flic.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/homebridge-flic/)
+
 [![NPM Version](https://img.shields.io/npm/v/homebridge-flic.svg)](https://www.npmjs.com/package/homebridge-flic)
 [![Dependency Status](https://img.shields.io/versioneye/d/nodejs/homebridge-flic.svg)](https://www.versioneye.com/nodejs/homebridge-flic/)
-[![Slack Channel](https://img.shields.io/badge/slack-homebridge--flic-green.svg)](https://homebridgeteam.slack.com/messages/C560YBZ8E/)
+[![Slack Channel](https://img.shields.io/badge/slack-homebridge--flic-e01563.svg)](https://homebridgeteam.slack.com/messages/C560YBZ8E/)
 
 [Flic](https://flic.io) plugin for [Homebridge](https://github.com/nfarina/homebridge).
 
