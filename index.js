@@ -1,5 +1,21 @@
 'use strict';
 
+// ** Sample config.json **
+//
+//"platforms": [
+//   {
+//       "platform": "Flic",
+//       "name": "Flic",
+//       "controllers": [
+//           {"host": "localhost", "port": 5551}
+//       ]
+//
+//       ** optional parameters **
+//       "autoDisconnectTime": 511,     // optional
+//       "latencyMode": "NormalLatency" // optional: latencyMode "NormalLatency", "LowLatency" or "HighLatency"
+//   }
+//]
+
 var fliclib = require('fliclib-daemon-client');
 var FlicClient = fliclib.FlicClient;
 var FlicConnectionChannel = fliclib.FlicConnectionChannel;
@@ -40,6 +56,16 @@ function FlicPlatform(log, config, api) {
     this.accessories = {};
     this.controllers = this.config.controllers || [{host: Constants.DEFAULT_HOST, port: Constants.DEFAULT_PORT}];
     this.log = log;
+
+    this.options = {}
+
+    if (this.config.autoDisconnectTime !== undefined && parseInt(this.config.autoDisconnectTime) !== undefined) {
+        this.options.autoDisconnectTime = parseInt(this.config.autoDisconnectTime);
+    }
+
+    if (this.config.latencyMode !== undefined && (["NormalLatency", "LowLatency", "HighLatency"].indexOf(this.config.latencyMode) !== -1)) {
+        this.options.latencyMode = this.config.latencyMode;
+    }
 
     this.api.on('didFinishLaunching', function() {
         self.controllers.forEach(
@@ -162,7 +188,7 @@ FlicPlatform.prototype.configurationRequestHandler = function(context, request, 
                                     }
                                 );
 
-                                var cc = new FlicConnectionChannel(bdAddr);
+                                var cc = new FlicConnectionChannel(bdAddr, self.options);
 
                                 cc.on("createResponse", function(error, connectionStatus) {
                                     if (connectionStatus == "Ready") {
