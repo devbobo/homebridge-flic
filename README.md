@@ -2,6 +2,7 @@
 
 [![npm package](https://nodei.co/npm/homebridge-flic.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/homebridge-flic/)
 
+[![donate](https://img.shields.io/badge/%24-Buy%20me%20a%20coffee-ff69b4.svg)](https://www.buymeacoffee.com/devbobo)
 [![Slack Channel](https://img.shields.io/badge/slack-homebridge--flic-e01563.svg)](https://homebridgeteam.slack.com/messages/C560YBZ8E/)
 
 [Flic](https://flic.io) plugin for [Homebridge](https://github.com/nfarina/homebridge).
